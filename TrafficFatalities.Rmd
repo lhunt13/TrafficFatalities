@@ -1,0 +1,30 @@
+---
+title: "Traffic Fatalities"
+author: "Lamar Hunt III"
+date: "September 9, 2016"
+output: html_document
+---
+
+# Introduction
+Did the legalization of Marijuana in Colorado decrease the number of traffic fatalities due to drunk driving? This is a causal question that is difficult to answer, so here we will focus on examining whether there was an association between the legalization of marijuana and traffic fatalities due to drunk driving. To answer this question, we will Fatality Analysis Reporting System (FARS) data provided by the National Highway Traffic Safety Administration (NHTSA). 
+
+# Methods
+## Data Acquisition
+
+## Key Variable Definitions
+
+## Statistical Analysis
+
+# Results
+
+# Discussion
+## Limitations
+```{r}
+library(foreign)
+library(ggplot2)
+library(ggmap)
+library(sp)
+library(RgoogleMaps)
+```
+
+
