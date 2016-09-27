@@ -1,15 +1,23 @@
+library(foreign)
+library(plyr)
+library(dplyr)
 
 ## Read in accident data
-library(foreign)
 path <- "/Users/lamarhuntiii/Documents/Second Year Classes/Data Science/data"
-for(i in 1983:2015){
+accident <- data.frame()
+for(i in 1975:2015){
   #accident file
   if(i <= 1982 | i >= 1994){
-    assign(paste0("accident",i),read.dbf(paste0(path, "/fars",i,"/accident.dbf")))
+    assign("temp",read.dbf(paste0(path, "/fars",i,"/accident.dbf")))
   }
   else{
-    assign(paste0("accident",i),read.dbf(paste0(path, "/fars",i,"/acc",i,".dbf")))
+    assign("temp",read.dbf(paste0(path, "/fars",i,"/acc",i,".dbf")))
   }
+}
+
+## Bind data frames together using rbind.fill
+for(i in 2009:2015){
+  
 }
 
 
@@ -30,7 +38,6 @@ for(i in 1975:1997){
 accident1975$MONTH <- ifelse(accident1975$MONTH==99, NA, accident1975$MONTH)
 accident1977$MONTH <- ifelse(accident1977$MONTH==99, NA, accident1977$MONTH)
 
-
 #
 
 
@@ -43,9 +50,18 @@ for(i in 1:56){
   plot(1975:2015, y, main=as.character(i), xlab="Year")
 }
 
+
+
+
+
+
 #to do:
 #weight no. fatalities by some measure of drivers on the road
-#
+#CausalImpact
+#paired t test but sd is estimated from rest of population
+#do.call()
+
+
 
 
 
