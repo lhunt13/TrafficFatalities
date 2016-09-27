@@ -10,15 +10,24 @@ Did the legalization of Marijuana in Colorado decrease the number of traffic fat
 
 # Methods
 ## Data Acquisition
+We use FARS data provided by the NHTSA, which can be accessed with ftp://ftp.nhtsa.dot.gov/fars. They provide data on every car fatality in the US from 1975 to 2015. 
 
 ## Key Variable Definitions
 
 ## Statistical Analysis
+First, we will weight each state's monthly traffic fatality counts by an estimate of the population. Second, we will compute the monthly rate of traffic fatalities due to drunk driving (where any person involved in the accident who was a driver, pedestrian or biker was under the influence). Finally, we will find a state that is comparable to Colorado ["comparable" to be defined later] and perform a Difference-in-Differences analysis on that outcome, where we choose the starting point to be 2009 and end point to be 2015 (3 years before and 3 years after the legalization of Marijauna in Colorado). If there is insufficient data to draw a conclusion, we may examine states that legalized medical Marijuana as well.
 
 # Results
 
 # Discussion
 ## Limitations
+Difference-in-differences is a causal analysis that takes advantage of the assumption that secular trends in two comparable locations are similar. However, this assumption may not hold.
+
+We only have data for 3 years after the legalization of Marijuana in Colorado, which may not be enough. 
+
+The weight we chose for traffic fatality counts may not be appropriate.Since different proportions of the population may be driving in different states, it may not serve as the optimal measure. A more appropriate weight would be to use some measure of the number of drivers on the road (e.g., average traffic density for a state, or the number of individuals with a drivers license in the state).  
+
+
 ```{r}
 library(foreign)
 library(ggplot2)
