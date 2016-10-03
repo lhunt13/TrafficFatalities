@@ -4,8 +4,7 @@ library(dplyr)
 
 ## Read in accident data
 path <- "/Users/lamarhuntiii/Documents/Second Year Classes/Data Science/data"
-accident <- data.frame()
-for(i in 1975:2015){
+for(i in 2008:2015){
   #accident file
   if(i <= 1982 | i >= 1994){
     assign("temp",read.dbf(paste0(path, "/fars",i,"/accident.dbf")))
@@ -16,9 +15,25 @@ for(i in 1975:2015){
 }
 
 ## Bind data frames together using rbind.fill
+accident <- data.frame()
 for(i in 2009:2015){
-  
+  text <- paste0("accident <- rbind.fill(accident, accident",i,")")
+  eval(parse(text=text))
 }
+
+#get raw numbers of drunk driving fatalities in colorado
+accident %>% group_by(STATE, YEAR) %>% 
+             filter(STATE==8 & DRUNK_DR %in% c(1,2)) %>% 
+             count(DRUNK_DR)
+
+
+
+
+
+
+
+
+
 
 
 ## plot counts by state each year

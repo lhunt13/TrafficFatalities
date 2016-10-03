@@ -10,12 +10,20 @@ Did the legalization of Marijuana in Colorado decrease the number of traffic fat
 
 # Methods
 ## Data Acquisition
-We use FARS data provided by the NHTSA, which can be accessed with ftp://ftp.nhtsa.dot.gov/fars. They provide data on every car fatality in the US from 1975 to 2015. 
+We use FARS data provided by the NHTSA, which can be accessed with ftp://ftp.nhtsa.dot.gov/fars. They provide data on every car fatality in the US from 1975 to 2015.
+
+In order to account for population differences between states, we also use population estimate data provided by the US Census (census.gov). 
+
+For 2000-2009: https://www.census.gov/popest/data/historical/2000s/vintage_2009/state.html
+for 2010-2015: https://www.census.gov/popest/data/national/asrh/2015/2015-nat-res.html
+
+In order to compute population density, we need estimates of the land area for each state.
 
 ## Key Variable Definitions
+The main variable we are concerned with is DRUNK_DR. As of 2008, this variable indicates whether a driver was tested positive for alcohol OR was reported to be under the influence by the police. 
 
 ## Statistical Analysis
-First, we will weight each state's monthly traffic fatality counts by an estimate of the population. Second, we will compute the monthly rate of traffic fatalities due to drunk driving (where any person involved in the accident who was a driver, pedestrian or biker was under the influence). Finally, we will find a state that is comparable to Colorado ["comparable" to be defined later] and perform a Difference-in-Differences analysis on that outcome, where we choose the starting point to be 2009 and end point to be 2015 (3 years before and 3 years after the legalization of Marijauna in Colorado). If there is insufficient data to draw a conclusion, we may examine states that legalized medical Marijuana as well.
+First, we will weight each state's monthly traffic fatality counts by an estimate of the population density for that month. Second, we will compute the monthly rate of traffic fatalities due to drunk driving (where any person involved in the accident who was a driver, pedestrian or biker was under the influence). Finally, we will find a state that is comparable to Colorado ["comparable" to be defined later] and perform a Difference-in-Differences analysis on that outcome, where we choose the starting point to be 2009 and end point to be 2015 (3 years before and 3 years after the legalization of Marijauna in Colorado). If there is insufficient data to draw a conclusion, we may examine states that legalized medical Marijuana as well.
 
 # Results
 

@@ -1,6 +1,6 @@
 #Download the data files
 path <- "/Users/lamarhuntiii/Documents/Second Year Classes/Data Science/data"
-for(i in 1975:2015){
+for(i in 2008:2015){
   dir.create(paste(path,"/fars",i,sep=""))
   assign(paste(path,i,"/zip.zip", sep=""),file())
   
