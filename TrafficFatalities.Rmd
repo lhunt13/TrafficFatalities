@@ -6,24 +6,24 @@ output: html_document
 ---
 
 # Introduction
-Did the legalization of Marijuana in Colorado decrease the number of traffic fatalities due to drunk driving? This is a causal question that is difficult to answer, so here we will focus on examining whether there was an association between the legalization of marijuana and traffic fatalities due to drunk driving. To answer this question, we will Fatality Analysis Reporting System (FARS) data provided by the National Highway Traffic Safety Administration (NHTSA). 
+Did the legalization of Marijuana in Colorado decrease the proportion of traffic fatalities involving drunk driving? Legalization may have allowed people to replace alcohol use with marijauna, leading to less drinking and driving, which in turn may have lead to fewer drunk driving fatalities.
+
+There may be some overall background shift in the proportion of fatal crashes involving drunk driving, so we cannot simply compare proportions in Colorado before and after legalization. To account for confounding due to time we 
+
+1. perform a Difference-in-Differences (DID) analysis on transformed binomial data OR
+2. perform DID analysis on untransformed binomial data but assuming a linear fit OR
+2. propose an effect of time in a logistic regression spline model with a knot at 2012
+
+We will use Fatality Analysis Reporting System (FARS) data provided by the National Highway Traffic Safety Administration (NHTSA) for years 2009 to 2015. 
 
 # Methods
 ## Data Acquisition
-We use FARS data provided by the NHTSA, which can be accessed with ftp://ftp.nhtsa.dot.gov/fars. They provide data on every car fatality in the US from 1975 to 2015.
-
-In order to account for population differences between states, we also use population estimate data provided by the US Census (census.gov). 
-
-For 2000-2009: https://www.census.gov/popest/data/historical/2000s/vintage_2009/state.html
-for 2010-2015: https://www.census.gov/popest/data/national/asrh/2015/2015-nat-res.html
-
-In order to compute population density, we need estimates of the land area for each state.
+We used FARS data provided by the NHTSA, which we downloaded from ftp://ftp.nhtsa.dot.gov/fars. They provide data on every car fatality in the US from 1975 to 2015.
 
 ## Key Variable Definitions
 The main variable we are concerned with is DRUNK_DR. As of 2008, this variable indicates whether a driver was tested positive for alcohol OR was reported to be under the influence by the police. 
 
 ## Statistical Analysis
-First, we will weight each state's monthly traffic fatality counts by an estimate of the population density for that month. Second, we will compute the monthly rate of traffic fatalities due to drunk driving (where any person involved in the accident who was a driver, pedestrian or biker was under the influence). Finally, we will find a state that is comparable to Colorado ["comparable" to be defined later] and perform a Difference-in-Differences analysis on that outcome, where we choose the starting point to be 2009 and end point to be 2015 (3 years before and 3 years after the legalization of Marijauna in Colorado). If there is insufficient data to draw a conclusion, we may examine states that legalized medical Marijuana as well.
 
 # Results
 
@@ -37,11 +37,7 @@ The weight we chose for traffic fatality counts may not be appropriate.Since dif
 
 
 ```{r}
-library(foreign)
-library(ggplot2)
-library(ggmap)
-library(sp)
-library(RgoogleMaps)
+
 ```
 
 
