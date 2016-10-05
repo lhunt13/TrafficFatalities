@@ -16,15 +16,24 @@ for(i in 2008:2015){
 
 ## Bind data frames together using rbind.fill
 accident <- data.frame()
-for(i in 2009:2015){
+for(i in 2008:2015){
   text <- paste0("accident <- rbind.fill(accident, accident",i,")")
   eval(parse(text=text))
 }
 
-#get raw numbers of drunk driving fatalities in colorado
-accident %>% group_by(STATE, YEAR) %>% 
-             filter(STATE==8 & DRUNK_DR %in% c(1,2)) %>% 
-             count(DRUNK_DR)
+## get raw numbers of drunk driving fatalities in colorado
+accident <- mutate(accident, drunk=(DRUNK_DR > 0))
+
+col.drunk <- accident %>% group_by(STATE, YEAR, MONTH) %>% 
+             filter(STATE==8) %>% 
+             summarize(mean(drunk)) %>%
+             print(n=nrow(.))
+plot(1:96,col.drunk$`mean(drunk)`)
+
+us.drunk <- accident %>% group_by(YEAR, MONTH) %>% 
+  summarize(mean(drunk))
+plot(1:96,us.drunk$`mean(drunk)`)
+
 
 
 

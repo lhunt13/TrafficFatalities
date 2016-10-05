@@ -8,13 +8,13 @@ output: html_document
 # Introduction
 Did the legalization of Marijuana in Colorado decrease the proportion of traffic fatalities involving drunk driving? Legalization may have allowed people to replace alcohol use with marijauna, leading to less drinking and driving, which in turn may have lead to fewer drunk driving fatalities.
 
-There may be some overall background shift in the proportion of fatal crashes involving drunk driving, so we cannot simply compare proportions in Colorado before and after legalization. To account for confounding due to time we 
-
-1. perform a Difference-in-Differences (DID) analysis on transformed binomial data OR
-2. perform DID analysis on untransformed binomial data but assuming a linear fit OR
-2. propose an effect of time in a logistic regression spline model with a knot at 2012
+There may be some overall background shift in the proportion of fatal crashes involving drunk driving, so we cannot simply compare proportions in Colorado before and after legalization. To account for confounding due to time we ...
 
 We will use Fatality Analysis Reporting System (FARS) data provided by the National Highway Traffic Safety Administration (NHTSA) for years 2009 to 2015. 
+
+To do:
+1. Determine potential confounders (Sex, Age)
+2. Figure out how to account for general secural trend throughout the US
 
 # Methods
 ## Data Acquisition
@@ -24,6 +24,8 @@ We used FARS data provided by the NHTSA, which we downloaded from ftp://ftp.nhts
 The main variable we are concerned with is DRUNK_DR. As of 2008, this variable indicates whether a driver was tested positive for alcohol OR was reported to be under the influence by the police. 
 
 ## Statistical Analysis
+1. Compute proportion of fatalities due to drunk driving by state and month
+2. 
 
 # Results
 
