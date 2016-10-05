@@ -6,20 +6,45 @@ library(dplyr)
 path <- "/Users/lamarhuntiii/Documents/Second Year Classes/Data Science/data"
 for(i in 2008:2015){
   #accident file
-  if(i <= 1982 | i >= 1994){
-    assign("temp",read.dbf(paste0(path, "/fars",i,"/accident.dbf")))
-  }
-  else{
-    assign("temp",read.dbf(paste0(path, "/fars",i,"/acc",i,".dbf")))
-  }
+    if(i <= 1982 | i >= 1994){
+        assign(paste0("accident",i),read.dbf(paste0(path, "/fars",i,"/accident.dbf")))
+    }
+    else{
+        assign(paste0("accident",i),read.dbf(paste0(path, "/fars",i,"/acc",i,".dbf")))
+    }
+  
+  #person file
+    if(i <= 1982 | i >= 1994){
+        assign(paste0("person",i),read.dbf(paste0(path, "/fars",i,"/person.dbf")))
+    }
+    else{
+        assign(paste0("person",i),read.dbf(paste0(path, "/fars",i,"/per",i,".dbf")))
+    }
+}
+#DRIMPAIR
+for(i in 2010:2015){
+    assign(paste0("drimpair",i),read.dbf(paste0(path, "/fars",i,"/drimpair.dbf")))
 }
 
+
 ## Bind data frames together using rbind.fill
+d2008 <- full_join(accident2008, person2008, by="ST_CASE")
+# want to keep: ST_CASE, PER_NO, DRUG, DRINKING, DRUNK_DR, AGE, SEX, STATE, YEAR, MONTH
+# also want DRIMPAIR from DRIMPAIR file?
 accident <- data.frame()
 for(i in 2008:2015){
-  text <- paste0("accident <- rbind.fill(accident, accident",i,")")
-  eval(parse(text=text))
+    text <- paste0("accident <- rbind.fill(accident, accident",i,")")
+    eval(parse(text=text))
 }
+
+person <- data.frame()
+for(i in 2008:2015){
+    text <- paste0("person <- rbind.fill(person, person",i,")")
+    eval(parse(text=text))
+}
+
+
+
 
 ## get raw numbers of drunk driving fatalities in colorado
 accident <- mutate(accident, drunk=(DRUNK_DR > 0))
@@ -77,13 +102,6 @@ for(i in 1:56){
 
 
 
-
-
-#to do:
-#weight no. fatalities by some measure of drivers on the road
-#CausalImpact
-#paired t test but sd is estimated from rest of population
-#do.call()
 
 
 

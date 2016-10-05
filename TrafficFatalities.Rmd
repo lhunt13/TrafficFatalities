@@ -13,8 +13,10 @@ There may be some overall background shift in the proportion of fatal crashes in
 We will use Fatality Analysis Reporting System (FARS) data provided by the National Highway Traffic Safety Administration (NHTSA) for years 2009 to 2015. 
 
 To do:
+
 1. Determine potential confounders (Sex, Age)
 2. Figure out how to account for general secural trend throughout the US
+3. If two 
 
 # Methods
 ## Data Acquisition
