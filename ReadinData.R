@@ -2,7 +2,7 @@ library(foreign)
 library(plyr)
 library(dplyr)
 
-## Read in accident data
+## Read in accident and person data
 path <- "/Users/lamarhuntiii/Documents/Second Year Classes/Data Science/data"
 for(i in 2008:2015){
   #accident file
@@ -21,16 +21,20 @@ for(i in 2008:2015){
         assign(paste0("person",i),read.dbf(paste0(path, "/fars",i,"/per",i,".dbf")))
     }
 }
-#DRIMPAIR
+## read in the DRIMPAIR data
 for(i in 2010:2015){
     assign(paste0("drimpair",i),read.dbf(paste0(path, "/fars",i,"/drimpair.dbf")))
 }
 
 
-## Bind data frames together using rbind.fill
-d2008 <- full_join(accident2008, person2008, by="ST_CASE")
-# want to keep: ST_CASE, PER_NO, DRUG, DRINKING, DRUNK_DR, AGE, SEX, STATE, YEAR, MONTH
-# also want DRIMPAIR from DRIMPAIR file?
+## Full join the accident and person rbind.fill
+## PER_TYP = 1 indicates Driver
+for(i in 2008:2015){
+    text <- paste0("d",i," <- full_join(accident",i,", person",i,", by='ST_CASE')")
+    eval(parse(text=text))
+}
+
+## rbind the dataframes together
 accident <- data.frame()
 for(i in 2008:2015){
     text <- paste0("accident <- rbind.fill(accident, accident",i,")")
@@ -45,6 +49,9 @@ for(i in 2008:2015){
 
 
 
+## get numbers of drivers who are impaired with alcohol
+## want people with (PER_TYP == 1) & (DRINKING = ) & (ALC_RES = )
+## we can also look at DRUGRES1-3
 
 ## get raw numbers of drunk driving fatalities in colorado
 accident <- mutate(accident, drunk=(DRUNK_DR > 0))
@@ -61,36 +68,25 @@ plot(1:96,us.drunk$`mean(drunk)`)
 
 
 
-
-
-
-
-
-
-
-
-
-## plot counts by state each year
+## tabulate counts by state each year
 library(dplyr)
 for(i in 1975:2015){
   text <- paste0("table(","accident",i,"$MONTH)")
   print(eval(parse(text=text)))
 }
 
-#change all the dates to 4 digits
+## change all the dates to 4 digits
 for(i in 1975:1997){
   text <- paste0("accident",i,"$YEAR <- ifelse(accident",i,"$YEAR==99, NA, ",i,")")
   eval(parse(text=text))
 }
 
-#clean up months
+## clean up months
 accident1975$MONTH <- ifelse(accident1975$MONTH==99, NA, accident1975$MONTH)
 accident1977$MONTH <- ifelse(accident1977$MONTH==99, NA, accident1977$MONTH)
 
-#
 
-
-#plotting no. fatalities by year for each state
+## plotting no. fatalities by year for each state
 for(i in 1:56){
   y <- numeric(0)
   for(j in 1:41){
