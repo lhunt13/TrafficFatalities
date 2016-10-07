@@ -16,7 +16,7 @@ To do:
 
 1. Determine potential confounders (Sex, Age)
 2. Figure out how to account for general secural trend throughout the US
-3. If two 
+3. Should we use crash level data or person level data? 
 
 # Methods
 ## Data Acquisition
@@ -26,8 +26,10 @@ We used FARS data provided by the NHTSA, which we downloaded from ftp://ftp.nhts
 The main variable we are concerned with is DRUNK_DR. As of 2008, this variable indicates whether a driver was tested positive for alcohol OR was reported to be under the influence by the police. 
 
 ## Statistical Analysis
-1. Compute proportion of fatalities due to drunk driving by state and month
-2. 
+We will perform a difference in differences analysis using a binomial model with a linear link. As a reference population we will use ...
+
+We will control for age and gender.
+
 
 # Results
 
