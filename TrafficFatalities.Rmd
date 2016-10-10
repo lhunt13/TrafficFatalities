@@ -26,9 +26,13 @@ We used FARS data provided by the NHTSA, which we downloaded from ftp://ftp.nhts
 The main variable we are concerned with is DRUNK_DR. As of 2008, this variable indicates whether a driver was tested positive for alcohol OR was reported to be under the influence by the police. 
 
 ## Statistical Analysis
-We will perform a difference in differences analysis using a binomial model with a linear link. As a reference population we will use ...
+The outcome is proportion of traffic fatalities involving a drunk driver for that month.
 
-We will control for age and gender.
+We will perform a difference in differences analysis using a binomial model with an identity link. 
+
+As a reference population we will use ...
+
+We will control for age and gender in the model.
 
 
 # Results
