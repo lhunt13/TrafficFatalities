@@ -38,7 +38,8 @@ We only had data on one year since the law was enacted, thereby limiting our res
 
 ## Further study
 
-
+## References
+http://scstatehouse.gov/sess120_2013-2014/bills/137.htm
 ```{r}
 
 ```
