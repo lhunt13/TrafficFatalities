@@ -1,8 +1,9 @@
 library(foreign)
 library(plyr)
 library(dplyr)
+library(lubridate)
 
-## Read in accident and person data
+## Read in person data
 path <- "/Users/lamarhuntiii/Documents/Second Year Classes/Data Science/data"
 for(i in 2008:2015){
    #person file
@@ -49,32 +50,31 @@ drivers$AGE <- ifelse(drivers$AGE %in% c(998,999),
 drivers$SEX <- ifelse(drivers$SEX %in% c(8,9),
                       NA,drivers$SEX)
 
+##compute dates from year and month variables
+
+
 ## get proportion of drunk drivers per month, per year, per state for 96 months
 ## get raw numbers of drunk driving fatalities in colorado
 col.drunk <- drivers %>% group_by(STATE, YEAR, MONTH) %>% 
     filter(STATE==8) %>% 
     summarize(prop=mean(drunk, na.rm=T))
-plot(1:96,col.drunk$prop,ylim=c(0,1))
+colorado <- ts(col.drunk$prop, frequency=12, start=c(2008,1))
+plot(colorado, ylim=c(0,1), ylab="Prop. drunk drivers")
 
 us.drunk <- drivers %>% group_by(YEAR, MONTH) %>% 
     summarize(prop=mean(drunk, na.rm=T))
-points(1:96,us.drunk$prop, col="red")
+usa <- ts(us.drunk$prop, frequency=12, start=c(2008,1))
+plot(usa, ylim=c(0,1), ylab="Prop. drunk drivers", col="red", add=T)
+
 
 for(i in unique(drivers$STATE)){
     drunk.props <- drivers %>% 
         group_by(STATE, YEAR, MONTH) %>% 
         filter(STATE==i) %>% 
         summarize(prop=mean(drunk, na.rm=T))
-    plot(1:dim(drunk.props)[1], 
-         drunk.props$prop, 
-         ylim=c(0,1), 
-         main=paste(i))
+    drunkts <- ts(drunk.props$prop, frequency=12, start=c(2008,1))
+    plot(drunkts, ylim=c(0,1), main=paste0(i))
 }
-
-
-
-
-
 
 
 
