@@ -2,6 +2,9 @@ library(foreign)
 library(plyr)
 library(dplyr)
 library(lubridate)
+library(changepoint)
+library(ggplot2)
+
 
 ## Read in person data
 path <- "/Users/lamarhuntiii/Documents/Second Year Classes/Data Science/data"
@@ -35,7 +38,8 @@ drivers$ALC_RES[drivers$YEAR < 2015] <- 10*drivers$ALC_RES[drivers$YEAR < 2015]
 drivers$AGE[drivers$YEAR == 2008] <- ifelse(99, 999, drivers$AGE[drivers$YEAR == 2008])
 
 ## add a variable indicating whether the driver was drunk
-drivers <- dplyr::mutate(drivers, drunk=(DRINKING==1 | (ALC_RES >= 500 & ALC_RES <= 940)))
+## drunk driving in south carolina is defined as BAC > .08
+drivers <- dplyr::mutate(drivers, drunk=(DRINKING==1 | (ALC_RES >= 800 & ALC_RES <= 940)))
 
 ## missing data
 #drunk
@@ -50,16 +54,34 @@ drivers$AGE <- ifelse(drivers$AGE %in% c(998,999),
 drivers$SEX <- ifelse(drivers$SEX %in% c(8,9),
                       NA,drivers$SEX)
 
+#day
+drivers$DAY <- ifelse(drivers$DAY==99, 
+                      NA,drivers$DAY)
+
 ##compute dates from year and month variables
+drivers$DATE <- ymd(paste(drivers$YEAR, drivers$MONTH, drivers$DAY, sep="-"))
+
+##logistic regression model with discontinuity at Jan 1st, 2015
+model1 <- glm(drunk ~ DATE + (DATE >= ymd("2015-1-1")) + DATE*(DATE >= ymd("2015-1-1")),
+    data=drivers[drivers$STATE==45,],
+    family="binomial")
 
 
 ## get proportion of drunk drivers per month, per year, per state for 96 months
 ## get raw numbers of drunk driving fatalities in colorado
-col.drunk <- drivers %>% group_by(STATE, YEAR, MONTH) %>% 
-    filter(STATE==8) %>% 
-    summarize(prop=mean(drunk, na.rm=T))
-colorado <- ts(col.drunk$prop, frequency=12, start=c(2008,1))
-plot(colorado, ylim=c(0,1), ylab="Prop. drunk drivers")
+sc.drunk <- drivers %>% group_by(STATE, YEAR, MONTH) %>% 
+    filter(STATE==45) %>%  
+    summarize(prop=mean(drunk, na.rm=T), DAY=round(mean(DAY))) #let the day be the avg day for that month
+sc.drunk$DATE <- ymd(paste(sc.drunk$YEAR, sc.drunk$MONTH, sc.drunk$DAY, sep="-"))
+plot(sc.drunk$DATE, sc.drunk$prop, type="l")
+model2 <- glm(log(prop) ~ DATE + (DATE >= ymd("2015-1-1")) + DATE*(DATE >= ymd("2015-1-1")), 
+              data=sc.drunk)
+with(sc.drunk, plot(DATE, log(prop), type="l", ylim=c(-5,0)))
+lines(sc.drunk$DATE, model2$fitted.values, col="red")
+
+## convert to ts object and plot
+southcarolina <- ts(sc.drunk$prop, frequency=12, start=c(2008,1))
+plot(southcarolina,ylim=c(0,1),ylab="Prop. drunk drivers")
 
 us.drunk <- drivers %>% group_by(YEAR, MONTH) %>% 
     summarize(prop=mean(drunk, na.rm=T))
@@ -76,7 +98,9 @@ for(i in unique(drivers$STATE)){
     plot(drunkts, ylim=c(0,1), main=paste0(i))
 }
 
-
+## use a GLM to perform interrupted time series
+sc.it <- glm(x ~ month + (month >= 85) + month*(month >= 85),
+             data=data.frame(as.data.frame(southcarolina),month=1:96))
 
 
 
