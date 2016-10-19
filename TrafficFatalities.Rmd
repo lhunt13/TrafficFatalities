@@ -1,8 +1,10 @@
 ---
 title: "Traffic Fatalities"
 author: "Lamar Hunt III"
+header-includes:
+  - \usepackage{textcomp}
 date: "September 9, 2016"
-output: html_document
+output: pdf_document
 ---
 
 # Introduction
@@ -25,11 +27,11 @@ FARS data records the date (down to the day) of each traffic fatality, but we ch
 Finally, we defined a categorical variable indicating whether the date was prior to or after the onset of Emma's law (October 1st, 2014).
 
 ## Statistical Analysis
-Let $Y_m$ be the log proportion of for month $m$, $D$ be the date, $c$ be October 1st, 2014, and $I(D > c)$ be an indicator variable. We performed an interrupted time series analysis with an interruption at October 1st, 2014, using the following linear model:
-$$
-Y_m = \beta_0 + \beta_1 D + \beta_2 X + \beta_3 (X I(D > c))
-$$
-
+Let $Y_m$ be the log proportion of for month $m$, $D_m$ be the date associated with that proportion, $c$ be October 1st, 2014, and $X = I(D > c)$ be an indicator variable. We performed an interrupted time series analysis with an interruption at October 1st, 2014, using the following linear model:
+\[
+Y_m = \beta_0 + \beta_1 D_m + \beta_2 X + \beta_3 (X*D) + \epsilon_m
+\]
+In this model, $\beta_0$ is the intercept of the time series prior to Emma's law, $\beta_1$ is the slope of the time series prior to the Emma's law, $\beta_2$ is the intercept shift occuring after Emma's law, and $\beta_3$ is the slope of the time series after Emma's law. We assume $\epsilon_m \overset{\text{i.i.d.}}{\sim} N(0, \sigma)$. This assumption is likely false due to cyclical trends in the time series, and this will effect the validity of our standard error estimates. 
 
 # Results
 
