@@ -18,7 +18,11 @@ The findings will be informative for future legislators seeking to reduce the pu
 We used FARS data provided by the NHTSA, which we downloaded from ftp://ftp.nhtsa.dot.gov/fars. They provide data on every car fatality in the US from 1975 to 2015.
 
 ## Key Variable Definitions
-The outcome is proportion of drivers involved in a traffic fatality who were reported to have been drunk by police, or who had BAC measured above 0.05.
+The outcome is proportion of drivers involved in a traffic fatality who were reported to have been drunk by police, or who had BAC measured above 0.08. We chose 0.08 as the threshold because this is the legal limit in the state of South Carolina [citation]. We computed this proportion for each month from January of 2008 through Decemeber of 2015, and performed a log transformation.
+
+FARS data records the date (down to the day) of each traffic fatality, but we chose to take proprtions on a monthly basis. Therefore, we defined the date (down to the day) of each proportion for each month using an average of the days within that month on which a drunk driving fatality occured, in order to capture the most representative date of the accidents for that month. This is contrast to arbitrarily setting the date to be the first of the month. Thus, if by chance most drunk driving accidents occured very early or late in the month this would be captured by our choice of day for that monthly proportion on the time series. 
+
+Finally, we defined a categorical variable indicating whether the date was prior to or after the onset of Emma's law (January 1st, 2015).
 
 ## Statistical Analysis
 
