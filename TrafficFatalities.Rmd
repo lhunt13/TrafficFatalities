@@ -3,9 +3,12 @@ title: "Traffic Fatalities"
 author: "Lamar Hunt III"
 header-includes:
   - \usepackage{textcomp}
-date: "September 9, 2016"
-output: pdf_document
+date: "October 28, 2016"
+output: 
+  pdf_document:
+    fig_caption: true
 ---
+
 
 # Introduction
 In 2014, in response to concerns about having some of the highest rates of drunk driving fatalities in the United states, the South Carolina General Assembly enacted Emma's law, which requires first-time DUI offenders with a blood-alcohol content (BAC) greater than 0.15 to install an ignition interlock device on their vehicles for 6 months. The device requires drivers to blow into a breathalyzer before starting their car, as well as periodically throughout their drive. If the driver's BAC surpasses the legal limit, the car cannot be started. 
@@ -31,9 +34,48 @@ Let $Y_m$ be the log proportion of for month $m$, $D_m$ be the date associated w
 \[
 Y_m = \beta_0 + \beta_1 D_m + \beta_2 X + \beta_3 (X*D) + \epsilon_m
 \]
-In this model, $\beta_0$ is the intercept of the time series prior to Emma's law, $\beta_1$ is the slope of the time series prior to the Emma's law, $\beta_2$ is the intercept shift occuring after Emma's law, and $\beta_3$ is the slope of the time series after Emma's law. We assume $\epsilon_m \overset{\text{i.i.d.}}{\sim} N(0, \sigma)$. This assumption is likely false due to cyclical trends in the time series, and this will effect the validity of our standard error estimates. 
+In this model, $\beta_0$ is the intercept of the time series prior to Emma's law, $\beta_1$ is the slope of the time series prior to the Emma's law, $\beta_2$ is the intercept shift occuring after Emma's law, and $\beta_3$ is the slope of the time series after Emma's law. We assume $\epsilon_m \overset{\text{i.i.d.}}{\sim} N(0, \sigma)$. We perform Wald t-tests for each coefficient, testing whether each one is different from 0. 
 
 # Results
+Refer to figure 1 for the results. The estimate of the intercept prior to Emma's law was found to be $\hat{\beta_1} = -0.89$, with the change in intercept at October 1st, 2014 being $\hat{\beta_3} = 5.2$ (95% confidence interval of)
+\begin{table}[!htbp] \centering 
+  \caption{Linear Model Results} 
+  \label{Label} 
+\begin{tabular}{@{\extracolsep{5pt}}lc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{1}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-2} 
+\\[-1.8ex] & log(prop) \\ 
+\hline \\[-1.8ex] 
+ $\beta_1$ (Date) & 0.00004 \\ 
+  & (0.00003) \\ 
+  & \\ 
+ $\beta_2$ (Change in intercept) & 5.198$^{***}$ \\ 
+  & (1.029) \\ 
+  & \\ 
+ $\beta_3$ (Change in slope) & $-$0.002$^{***}$ \\ 
+  & (0.0004) \\ 
+  & \\ 
+ $\beta_0$ (intercept) & $-$0.890$^{***}$ \\ 
+  & (0.043) \\ 
+  & \\ 
+\hline \\[-1.8ex] 
+Observations & 96 \\ 
+R$^{2}$ & 0.708 \\ 
+Adjusted R$^{2}$ & 0.698 \\ 
+Residual Std. Error & 0.194 (df = 92) \\ 
+F Statistic & 74.280$^{***}$ (df = 3; 92) \\ 
+\hline 
+\hline \\[-1.8ex] 
+\textit{Note:}  & \multicolumn{1}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
+\end{tabular} 
+\end{table} 
+
+```{r Analysis, echo=FALSE, warning=FALSE, message=FALSE, fig.cap="We plot log-proportion of drivers involved in traffic fatalities in Texas and South Carolina who were drunk plotted against calender time from January 2008 through December 2015. Overlayed in red and blue are the interrupted time series model fits for SC and TX, respectively. Note the interruption at October 1st, 2014 when Emma's law came into effect. Prior to Emma's law SC and TX trend similarly; however, after enactment of the law we see a more drastic shift in the intercept and slope in SC compared to TX."}
+source("ReadinData.R")
+```
+
 
 # Discussion
 ## Limitations
@@ -43,7 +85,7 @@ We only had data on one year since the law was enacted, thereby limiting our res
 
 ## Further study
 
-## References
+# References
 http://scstatehouse.gov/sess120_2013-2014/bills/137.htm
 ```{r}
 
