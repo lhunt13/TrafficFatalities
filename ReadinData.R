@@ -16,6 +16,7 @@ for(i in 2008:2015){
     }
 }
 
+########################### DATA CLEANING #############################
 ## concatenate all the person files, and add a year variable
 person <- data.frame()
 for(i in 2008:2015){
@@ -59,7 +60,7 @@ drivers$DAY <- ifelse(drivers$DAY==99,
 ##compute dates from year and month variables
 drivers$DATE <- ymd(paste(drivers$YEAR, drivers$MONTH, drivers$DAY, sep="-"))
 
-
+#################### MODELING ############################
 ## get proportion of drunk drivers per month, per year, per state for 96 months
 ## get raw numbers of drunk driving fatalities in colorado
 ## let the day be the avg day for that month
@@ -81,10 +82,12 @@ model3 <- glm(log(prop) ~ DATE + (DATE >= ymd("2013-1-1")) + DATE*(DATE >= ymd("
 with(sc.drunk, plot(DATE, log(prop), type="l"))
 lines(sc.drunk$DATE, model3$fitted.values, col="red")
 
-
+#################### Working with Time series object ############################
 ## convert to ts object and plot
 southcarolina <- ts(sc.drunk$prop, frequency=12, start=c(2008,1))
 plot(southcarolina,ylim=c(0,1),ylab="Prop. drunk drivers")
+boxplot(southcarolina~cycle(southcarolina))
+plot(stl(southcarolina, s.window="periodic"))
 
 us.drunk <- drivers %>% group_by(YEAR, MONTH) %>% 
     summarize(prop=mean(drunk, na.rm=T))
@@ -104,6 +107,51 @@ for(i in unique(drivers$STATE)){
 ## use a GLM to perform interrupted time series
 sc.it <- glm(x ~ month + (month >= 85) + month*(month >= 85),
              data=data.frame(as.data.frame(southcarolina),month=1:96))
+
+
+
+################# Explore traffic fatality incidents ######################
+## read in accident data
+path <- "/Users/lamarhuntiii/Documents/Second Year Classes/Data Science/data"
+for(i in 1975:2015){
+  #accident file
+  if(i <= 1982 | i >= 1994){
+    assign(paste0("accident",i),read.dbf(paste0(path, "/fars",i,"/accident.dbf")))
+  }
+  else{
+    assign(paste0("accident",i),read.dbf(paste0(path, "/fars",i,"/acc",i,".dbf")))
+  }
+}
+
+## concatenate all the person files, and add a year variable
+accident <- data.frame()
+for(i in 1975:2015){
+  text0 <- paste0("accident",i,"$YEAR <- rep(",i,", dim(accident",i,")[1])")
+  eval(parse(text=text0))
+  
+  text <- paste0("accident <- rbind.fill(accident, accident",i,")")
+  eval(parse(text=text))
+}
+
+table(accident$YEAR)
+
+MonthlyCounts <- accident %>% 
+                 group_by(YEAR, MONTH) %>%
+                 summarise(total=n())
+America <- ts(MonthlyCounts$total, frequency=12, start=c(1975,1))  
+plot(America)
+boxplot(America~cycle(America))
+
+
+## look at drunk driving overall
+MonthlyDrunk <- accident %>%
+                group_by(YEAR, MONTH) %>%
+                summarise(drunks=sum(DRUNK_DR))
+America.drunk <- ts(MonthlyDrunk$drunks, frequency=12, start=c(1975,1))
+plot(America.drunk)
+boxplot(America.drunk~cycle(America.drunk))
+plot(stl(America.drunk,s.window="periodic"))
+
 
 
 
