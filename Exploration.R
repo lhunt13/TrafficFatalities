@@ -51,20 +51,22 @@ for(i in 1975:2015){
 
 table(accident$YEAR)
 
-MonthlyCounts <- accident %>% 
+MonthlyCounts <- accident %>% filter(YEAR >= 1980) %>%
   group_by(YEAR, MONTH) %>%
   summarise(total=n())
-America <- ts(MonthlyCounts$total, frequency=12, start=c(1975,1))  
+America <- ts(MonthlyCounts$total, frequency=12, start=c(1980,1))  
 plot(America)
 boxplot(America~cycle(America))
 
 
 ## look at drunk driving overall
-MonthlyDrunk <- accident %>%
+MonthlyDrunk <- accident %>% filter(YEAR >= 1980) %>%
   group_by(YEAR, MONTH) %>%
   summarise(drunks=sum(DRUNK_DR))
-America.drunk <- ts(MonthlyDrunk$drunks, frequency=12, start=c(1975,1))
-plot(America.drunk)
+America.drunk <- ts(MonthlyDrunk$drunks, frequency=12, start=c(1980,1))
+plot(America.drunk, main="Monthly Counts of Drunk Drivers \n in the U.S.",
+     ylab="No. Drunk Drivers")
+
 boxplot(America.drunk~cycle(America.drunk))
 plot(stl(America.drunk,s.window="periodic"))
 
