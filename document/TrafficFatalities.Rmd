@@ -1,0 +1,113 @@
+---
+title: "Traffic Fatalities"
+author: "Lamar Hunt III"
+header-includes:
+  - \usepackage{textcomp}
+date: "October 28, 2016"
+output: 
+  pdf_document:
+    fig_caption: true
+---
+```{r readin, echo=FALSE, warning=FALSE, message=FALSE}
+source("../code/ReadinData.R")
+```
+
+# Introduction
+In 2014, in response to concerns about having some of the highest rates of drunk driving fatalities in the United states, the South Carolina General Assembly enacted Emma's law, which requires anyone convicted of a first-time DUI offense with a blood-alcohol content (BAC) greater than 0.15 to install an ignition interlock device (IID) on their vehicles for 6 months.[^1] Previously only second time offenders were required to do so. The device requires drivers to blow into a breathalyzer before starting their car, as well as periodically throughout their drive. If the driver's BAC surpasses the legal limit, the car cannot be started. 
+
+In this report, we examine whether there was a change in the proportion of drivers involved in a traffic fatality who were driving under the influence following the enactment of Emma's law. We use Fatality Analysis Reporting System (FARS) data provided by the National Highway Traffic Safety Administration (NHTSA).[^2] We perform an interrupted time series analysis on monthly data from South Carolina for years 2008 to 2015, with an interruption specified on October 1st, 2014, when the law came into effect. We also apply the same analysis to data from Texas, which had similar rates of drunk driving fatalities over the past 8 years and which does not mandate intallation of IIDs after a first offense.[^3]
+
+The findings will be informative for future legislators seeking to reduce the public health burden of drinking and driving. 
+
+# Methods
+## Data Acquisition
+We used FARS data provided by the NHTSA, which we downloaded from ftp://ftp.nhtsa.dot.gov/fars. They provide data on every car fatality in the US from 1975 to 2015. The data we needed for the analysis can be found in the "person" file associated with each year. This file contains information regarding each person (drivers, passengers, pedestrians, bikers) involved in each fatality incident, such as their age, sex, BAC, and whether a police officer categorized them as drunk.
+
+## Key Variable Definitions
+### Main Outcome
+The outcome is proportion of drivers involved in a traffic fatality who were reported to have been drunk by police, or who had BAC measured above 0.08. We chose 0.08 as the threshold because this is the legal limit in the state of South Carolina [citation]. We computed this proportion for each month from January of 2008 through Decemeber of 2015, and performed a log transformation. We chose to look at data going back to 2008 because that is when the number of drunk driviers involved in fatalities in the U.S. overall seemed to begin to decrease most recently (see Figure 1).
+
+```{r plotalldrunks, echo=FALSE, warning=FALSE, message=FALSE, fig.cap="Number of drunk drivers involved in a crash fatality each month in the entire U.S. from January 2000 to December 2015. Note the downward trend in time indicated by the loess smoother in red after 2008 (marked in green)." }
+## plot monthly dd counts for all USA per month
+MonthlyDrunk <- drivers %>% 
+  group_by(YEAR, MONTH) %>%
+  summarise(drunks=sum(drunk, na.rm=T))
+America.drunk <- ts(MonthlyDrunk$drunks, frequency=12, start=c(2000,1))
+plot(America.drunk, main="Monthly Counts of Drunk Drivers \n in the U.S.",
+     ylab="No. Drunk Drivers")
+trend <- stl(America.drunk, s.window="periodic")
+lines(trend$time.series[,2], col="red")
+abline(v=2008, col="green")
+legend("topright", col=c("black","red", "green"), lty=1, legend=c("Count", "Trend","2008"))
+```
+
+### Calendar Time
+FARS data records the date (down to the day) of each traffic fatality, but we chose to take proprtions on a monthly basis. Therefore, we defined the date (down to the day) of each proportion for each month using an average of the days within that month on which a drunk driving fatality occured, in order to capture the most representative date of the accidents for that month. This is in contrast to arbitrarily setting the date to be the first of the month. Thus, if by chance most drunk driving accidents occured very early or late in the month this would be captured by our choice of day for that monthly proportion on the time series. 
+
+### Intervention
+Finally, we defined a categorical variable indicating whether the date was prior to or after the onset of Emma's law (October 1st, 2014).
+
+## Statistical Analysis
+Let $Y_m$ be the log proportion of for month $m$, $D_m$ be the date associated with that proportion, $c$ be October 1st, 2014, and $X = I(D > c)$ be an indicator variable. We performed an interrupted time series analysis with an interruption at October 1st, 2014, using the following linear model:
+\[
+Y_m = \beta_0 + \beta_1 D_m + \beta_2 X + \beta_3 (X*D) + \epsilon_m
+\]
+In this model, $\beta_0$ is the intercept of the time series prior to Emma's law, $\beta_1$ is the slope of the time series prior to the Emma's law, $\beta_2$ is the intercept shift occuring after Emma's law, and $\beta_3$ is the slope shift of the time series after Emma's law. We assume $\epsilon_m \overset{\text{i.i.d.}}{\sim} N(0, \sigma)$. We perform Wald t-tests for each coefficient, testing whether each one is different from 0. We perform the same analysis on data from Texas and South Carolina and compare the results. 
+
+# Results
+In Table 1, we report the coefficient estimates and standerd errors for both models. In Figure 2, we plot the time series of log proportion of drivers who were drunk, along with the regression lines from fitting each model.
+
+Prior to October 1st, 2014, both Texas and South Carolina seem to be trending similarly. Both states have an estimated shift it intercept that is significantly different from 0, with $p=0.014$ for Texas and $p=2.22e-06$ for South Carolina. Likewise, both have an estimated shift in slope that differs from 0, with $p=0.00799$ for Texas and $p=8.10e-08$ for South Carolina. 
+
+\begin{table}[!htbp] \centering 
+  \caption{Linear Model Results} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}}rcc} 
+\\[-1.8ex]\hline 
+\\[-1.8ex] & South Carolina & Texas\\ 
+\hline \\[-1.8ex] 
+ Intercept before 10/1/2014 & $-$0.890$^{***} (0.043)$ & $-$0.875$^{***} (0.023)$ \\ 
+  & & \\ 
+ Slope before 10/1/2014 & 0.00004 (0.00003) & 0.0001$^{***}$ (0.00002) \\ 
+  & & \\ 
+ Intercept Shift & 5.198$^{***}$ (1.029) & 1.353$^{**}$ (0.539)\\ 
+  & & \\ 
+ Slope Shift  & $-$0.002$^{***}$ (0.0004) & $-$0.001$^{***}$ (0.0002) \\ 
+  & & \\ 
+\hline \\[-1.8ex] 
+Observations & 96 & 96 \\ 
+R$^{2}$ & 0.708 & 0.257 \\ 
+Adjusted R$^{2}$ & 0.698 & 0.232 \\ 
+Residual Std. Error (df = 92) & 0.194 & 0.101 \\ 
+F Statistic (df = 3; 92) & 74.280$^{***}$ & 10.592$^{***}$ \\ 
+\hline 
+\hline \\[-1.8ex] 
+\textit{Note:}  & \multicolumn{2}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
+\end{tabular} 
+\end{table} 
+
+
+```{r Analysis, echo=FALSE, warning=FALSE, message=FALSE, fig.cap="We plot log-proportion of drivers involved in traffic fatalities in Texas and South Carolina who were drunk plotted against calender time from January 2008 through December 2015. Overlayed in red and blue are the interrupted time series model fits for SC and TX, respectively. Note the interruption at October 1st, 2014 when Emma's law came into effect. Prior to Emma's law SC and TX trend similarly; however, after enactment of the law we see a more drastic shift in the intercept and slope in SC compared to TX."}
+source("../code/ModelData.R")
+```
+
+# Discussion
+Both the intercept shift and slope shift are larger for South Carolina compared to Texas, despite both states having a similar trend prior to the intervention. We interpret this to be consistent with the claim that there was a greater decrease in the proportion of drivers involved in fatalities who were drunk in South Carolina after the enactment of Emma's law compared to Texas.
+
+Texas does have IID requirements for DUI offenders, however the law does not require offenders to install them in every case. Thus, the foregoing results suggest that the harsher penalties for first time offenders in South Carolina are associated with a drop in the proportion of drivers invovled in traffic fatalities who were drunk. This is informative for legislators interested in reducing the public health burden of drunk driving.
+
+## Limitations
+As Emma's law only recently came into effect, we do not have much data available to address this question. Moreover, we have only shown an association between the enactment of the law and a reduction in drunk driving fatalities. Since we did not control for state level variables that may be relevant for the rates of drunk driving within a state (age, sex, race, socioeconomic status), it is difficult to draw a causal conclusion. It is possible that mainly demographic differences between South Carolina and Texas account for the difference in both the slope and intercept shift seen here. Indeed, rates of drunk driving throughout the U.S. in general seem to be dropping over time (see Figure 1), and the effect we see in South Carolina may simply be related to this general trend. 
+
+## Further study
+The obvious next step would be to collect demographic data relavant to drunk driving from all states in the U.S. and use that to standardize state populations for comparison (e.g., using propensity scores). Secondly, methods such as Difference and Differences could be used to account for the fact that drunk driving rates seem to generally be decreasing as a function of time. Finally, it would be interesting to examine the drunk driving penalties in all states to gather more information about the effect of laws similar to Emma's law.
+
+
+
+
+
+
+
+[^1]: http://scstatehouse.gov/sess120_2013-2014/bills/137.htm (Emma's law)
+[^2]: http://www.nhtsa.gov/Data/Fatality-Analysis-Reporting-System-(FARS)
+[^3]: See section 521.246 (c) of the Texas Transportation code. Note that IIDs are not strictly required in all cases. http://www.statutes.legis.state.tx.us/Docs/TN/htm/TN.521.htm
