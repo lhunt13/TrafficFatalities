@@ -108,7 +108,7 @@ legend("topright", col=c("black","red", "green"), lty=1, legend=c("Count", "Tren
 
 We need to find a state similar to South Carolina in terms of the proportions of drivers involved in fatalities who were drunk. So here we plot every single state's proportion of drivers who were drunk for each month from 2008 to 2015. We find that Texas (state 48) is similar looking to South Caroline (state 45):
 
-```{r plotallstates}
+```{r plotsouthcarolina}
 par(mfrow=c(2,2))
 for(i in unique(drivers$STATE)){
     if(i==45){title <- "South Carolina"}
@@ -124,10 +124,9 @@ for(i in unique(drivers$STATE)){
 }
 ```
 
-# Modeling the data
-
-```{r }
-# get proportion of drunk drivers per month, per year, per state for 96 months
+# Log transforming the data
+```{r logtransform}
+# first, we get proportion of drunk drivers per month, per year, per state for 96 months
 # let the day be the avg day for that month
 sc.drunk <- drivers %>% filter(YEAR >= 2008) %>%
   group_by(STATE, YEAR, MONTH) %>% 
@@ -145,13 +144,32 @@ sc.drunk$DATE_reg <- sc.drunk$DATE - ymd("2008-1-1")
 tx.drunk$DATE <- ymd(paste(tx.drunk$YEAR, tx.drunk$MONTH, tx.drunk$DAY, sep="-"))
 tx.drunk$DATE_reg <- tx.drunk$DATE - ymd("2008-1-1")
 
+# Now, we plot histograms of the data
+hist(log(tx.drunk$prop), breaks=20)
+hist(tx.drunk$prop, breaks=20)
+hist(log(sc.drunk$prop[sc.drunk$YEAR < 2014]), breaks=20)
+hist(sc.drunk$prop[sc.drunk$YEAR < 2014], breaks=20)
 
+# examine seasonal trends of the logged and non logged data
+sc.ts <- ts(sc.drunk$prop, frequency = 12, start=c(2008,1))
+sc.ts.log <- ts(log(sc.drunk$prop), frequency = 12, start=c(2008,1))
+tx.ts <- ts(tx.drunk$prop, frequency = 12, start=c(2008,1))
+tx.ts.log <- ts(log(tx.drunk$prop), frequency = 12, start=c(2008,1))
+plot(stl(tx.ts, s.window="periodic"))
+plot(stl(tx.ts.log, s.window="periodic"))
+```
+
+# Modeling the data
+
+```{r }
 # fit a linear interrupted time series using, but set intercept at Jan 1st, 2008
 c <- ymd("2014-10-1") - ymd("2008-1-1")
 model.sc <- lm(log(prop) ~ DATE_reg + (DATE_reg >= c) + DATE_reg*(DATE_reg >= c), 
                data=sc.drunk)
 model.tx <- lm(log(prop) ~ DATE_reg + (DATE_reg >= c) + DATE_reg*(DATE_reg >= c), 
                data=tx.drunk)
+
+plot(model.sc)
 
 # plot the data with the fitted line
 # southcaroline

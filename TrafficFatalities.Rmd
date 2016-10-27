@@ -1,5 +1,5 @@
 ---
-title: "Traffic Fatalities"
+title: "Do Mandatory Ignition Interlock Device Laws Reduce Drunk Driving Fatalities?"
 author: "Lamar Hunt III"
 header-includes:
   - \usepackage{textcomp}
@@ -13,6 +13,7 @@ library(foreign)
 library(plyr)
 library(dplyr)
 library(lubridate)
+library(robustbase)
 
 ######################
 ## READ IN THE DATA ##
@@ -81,7 +82,7 @@ We used Fatality Analysis Reporting System (FARS)[^3] data provided by the Natio
 
 ## Key Variable Definitions
 ### Main Outcome
-The outcome is proportion of drivers involved in a traffic fatality who were reported to have been drunk by police, or who had BAC measured above 0.08. We chose 0.08 as the threshold because this is the legal limit in the state of South Carolina. We computed this proportion for each month from January of 2008 through Decemeber of 2015, and performed a log transformation. We chose to look at data going back to 2008 because that is when the number of drunk driviers involved in fatalities in the U.S. overall seemed to begin to decrease most recently (see Figure 1).
+The outcome is the log-proportion of drivers involved in a traffic fatality who were reported to have been drunk by police, or who had BAC measured above 0.08. We chose 0.08 as the threshold because this is the legal limit in the state of South Carolina. We computed this proportion for each month from January of 2008 through Decemeber of 2015, and performed a log transformation in order to make the data normally distributed and to linearize the relationship between the predictors and the outcome, as it is a proportion (see supplementary document). We chose to look at data going back to 2008 because that is when the number of drunk driviers involved in fatalities in the U.S. overall seemed to begin to decrease most recently (see Figure 1).
 
 ```{r plotalldrunks, echo=FALSE, warning=FALSE, message=FALSE, fig.cap="Number of drunk drivers involved in a crash fatality each month in South Carolina from January 2000 to December 2015. Note the trend stabalizing after 2008 (marked in green) indicated by the loess smoother in red." }
 # plot monthly dd counts for South Carolina per month
@@ -98,7 +99,7 @@ legend("topright", col=c("black","red", "green"), lty=1, legend=c("Count", "Tren
 ```
 
 ### Calendar Time
-FARS data records the date (down to the day) of each traffic fatality, but we chose to take proprtions on a monthly basis. Therefore, we defined the date (down to the day) of each proportion for each month using an average of the days within that month on which a drunk driving fatality occured, in order to capture the most representative date of the accidents for that month. This is in contrast to arbitrarily setting the date to be the first of the month. Thus, if by chance most drunk driving accidents occured very early or late in the month this would be captured by our choice of day for that monthly proportion on the time series. 
+FARS data records the date (down to the day) of each traffic fatality, but we chose to take proprtions on a monthly basis. Therefore, we defined the date (down to the day) of each proportion for each month using an average of the days within that month on which a drunk driving fatality occured, in order to capture the most representative date of the accidents for that month. This is in contrast to arbitrarily setting the date to be the first of the month. Thus, if by chance most drunk driving accidents occured very early or late in the month this would be captured by our choice of day for that monthly proportion on the time series.
 
 ### Intervention
 Finally, we defined a categorical variable indicating whether the date was prior to or after the onset of Emma's law (October 1st, 2014). Although participants are not being randomized to pre- or post-policy intervention, because we assume that other factors relevant to drunk driving (e.g., age, race, sex, socioeconomic status) do not suddenly change in South Carolina after Emma's law came into effect, we treat the date of policy change as an intervention is a quasi-experiment. 
@@ -106,14 +107,16 @@ Finally, we defined a categorical variable indicating whether the date was prior
 ## Statistical Analysis
 Let $Y_m$ be the log proportion of for month $m$, $D_m$ be the date associated with that proportion, $c$ be October 1st, 2014, and $X = I(D > c)$ be an indicator variable. We performed an interrupted time series analysis with an interruption at October 1st, 2014, using the following linear model, which we fit using least squares:
 \[
-Y_m = \beta_0 + \beta_1 D_m + \beta_2 X + \beta_3 (X*D) + \epsilon_m
+Y_m = \beta_0 + \beta_1 (D_m - c) + \beta_2 X + \beta_3 (X*(D_m - c)) + \epsilon_m
 \]
-In this model, $\beta_0$ is the intercept of the time series prior to Emma's law, $\beta_1$ is the slope of the time series prior to the Emma's law, $\beta_2$ is the intercept shift occuring after Emma's law, and $\beta_3$ is the slope shift of the time series after Emma's law. We assume $\epsilon_m \overset{\text{i.i.d.}}{\sim} N(0, \sigma)$. We perform Wald t-tests for each coefficient, testing whether each one is different from 0. We perform the same analysis on data from Texas and South Carolina and compare the results. 
+where we have used the value $D_m - c$ for ease of interpreting the intercept coefficients. In this model, $\beta_0$ is the average log-proportion of drunk drivers just prior to the enactment of Emma's law, $\beta_1$ is the slope of the time series prior to the Emma's law, $\beta_2$ is the intercept shift occuring after Emma's law, and $\beta_3$ is the slope shift of the time series after Emma's law. We assume $\epsilon_m \overset{\text{i.i.d.}}{\sim} N(0, \sigma)$.[^4] We perform Wald t-tests for each coefficient, testing whether each one is different from 0. We perform the same analysis on data from Texas and South Carolina and compare the results.
 
 # Results
 In Table 1, we report the coefficient estimates and standerd errors for both models. In Figure 2, we plot the time series of log proportion of drivers who were drunk, along with the regression lines from fitting each model.
 
 Prior to October 1st, 2014, both Texas and South Carolina seem to be trending similarly, with the monthly log-proportion of drunk drivers estimated to be increasing by $4.301$e$-05$ ($SE=3.021$e$-05, p=0.158, df=92$) and $8.132$e$-05$ ($SE=1.584$e$-05, p=1.59$e$-06, df=92$) per month for South Carolina and Texas, respectively. However, after the policy change in South Carolina we see a significant change in slope of $-2.253$e$-03$ ($SE=3.822$e$-04, p=6.13$e$-08$) compared to the smaller shift of $-5.434$e$-04$ ($SE=2.004$e$-04, p=0.00799$) seen in Texas after that time. 
+
+We also see that the intercept change, interpreted as the shift in average log-proportion at the time Emma's law is enacted, is much larger for South Carolina ($-2.994$e$-01$, $SE=1.089$e$-01$, $p=0.00718$) than for Texas ($1.317$e$-02$, $SE=5.708$e$-02$, $p=0.81804$). 
 
 \begin{table}[!htbp] \centering 
   \caption{Linear Model Results. Parentheses contain standard errors.} 
@@ -122,14 +125,14 @@ Prior to October 1st, 2014, both Texas and South Carolina seem to be trending si
 \\[-1.8ex]\hline 
 \\[-1.8ex] & South Carolina & Texas\\ 
 \hline \\[-1.8ex] 
- Intercept before 10/1/14 & $-$0.890$^{***}$ & $-$0.875$^{***}$ \\ 
+ Avg. at 10/1/14 & $-$0.890$^{***}$ & $-$0.875$^{***}$ \\ 
   & (0.043) & (0.023) \\ 
   & & \\
  Slope before 10/1/14 & 0.00004 & 0.0001$^{***}$ \\ 
   & (0.00003) & (0.00002) \\ 
   & & \\ 
- Intercept Shift & 5.254$^{***}$ & 1.353$^{**}$ \\ 
-  & (1.028) & (0.539) \\ 
+ Intercept Shift & $-$0.299$^{***}$ & 0.013 \\ 
+  & (0.109) & (0.057) \\ 
   & & \\ 
  Slope shift & $-$0.002$^{***}$ & $-$0.001$^{***}$ \\ 
   & (0.0004) & (0.0002) \\ 
@@ -163,17 +166,17 @@ tx.drunk <- drivers %>% filter(YEAR >= 2008) %>%
 
 ## add a date variable
 sc.drunk$DATE <- ymd(paste(sc.drunk$YEAR, sc.drunk$MONTH, sc.drunk$DAY, sep="-"))
-sc.drunk$DATE_reg <- sc.drunk$DATE - ymd("2008-1-1")
+sc.drunk$DATE_reg <- sc.drunk$DATE - ymd("2014-10-1")
 
 tx.drunk$DATE <- ymd(paste(tx.drunk$YEAR, tx.drunk$MONTH, tx.drunk$DAY, sep="-"))
-tx.drunk$DATE_reg <- tx.drunk$DATE - ymd("2008-1-1")
+tx.drunk$DATE_reg <- tx.drunk$DATE - ymd("2014-10-1")
 
 
 ## fit a linear interrupted time series using, but set intercept at Jan 1st, 2008
-c <- ymd("2014-10-1") - ymd("2008-1-1")
-model.sc <- lm(log(prop) ~ DATE_reg + (DATE_reg >= c) + DATE_reg*(DATE_reg >= c), 
+c <- ymd("2014-10-1")
+model.sc <- lm(log(prop) ~ DATE_reg + (DATE_reg >= 0) + DATE_reg*(DATE_reg >= 0), 
                data=sc.drunk)
-model.tx <- lm(log(prop) ~ DATE_reg + (DATE_reg >= c) + DATE_reg*(DATE_reg >= c), 
+model.tx <- lm(log(prop) ~ DATE_reg + (DATE_reg >= 0) + DATE_reg*(DATE_reg >= 0), 
                data=tx.drunk)
 
 ## plot the data with the fitted line
@@ -199,19 +202,20 @@ legend("bottomleft", col=c("black","red","darkorange","blue"), lty=1, lwd=3,
 # Discussion
 Both the intercept shift and slope shift are larger for South Carolina compared to Texas, despite both states having a similar trend prior to the intervention. We interpret this to be consistent with the claim that there was a greater decrease in the proportion of drivers involved in fatalities who were drunk in South Carolina after the enactment of Emma's law compared to Texas.
 
-Texas does have IID requirements for DUI offenders, however the law does not require offenders to install them in every case. Thus, the foregoing results suggest that the harsher penalties enacted for first time offenders in South Carolina with Emma's law are associated with a drop in the proportion of drivers involved in traffic fatalities who were drunk. Assuming that other factors relevant to drunk driving rates do not significantly change in South Carolina or Texas after the date of the policy change in South Carolina, we may interpret these results to indicate that the policy causes the slope change seen in South Carolina. This is informative for legislators interested in reducing the public health burden of drunk driving.
+Texas does have IID requirements for DUI offenders, however the law does not require offenders to install them in every case. Thus, the foregoing results suggest that the harsher penalties enacted for first time offenders in South Carolina with Emma's law are associated with a drop in the proportion of drivers involved in traffic fatalities who were drunk. Assuming that other factors relevant to drunk driving rates do not significantly change in South Carolina or Texas after the date of the policy change in South Carolina, we may interpret these results to indicate that the policy causes the slope and intercept change seen in South Carolina. This is informative for legislators interested in reducing the public health burden of drunk driving.
 
 ## Limitations
-As Emma's law only recently came into effect, we do not have much data available to address this question. Moreover, we have only shown an association between the enactment of the law and a reduction in drunk driving fatalities. Since we did not control for state level variables that may be relevant for the rates of drunk driving within a state (age, sex, race, socioeconomic status), it is difficult to draw a causal conclusion. It is possible that mainly demographic differences between South Carolina and Texas account for the difference in both the slope and intercept shift seen here. Indeed, rates of drunk driving throughout the U.S. in general seem to be dropping over time (see Figure 1), and the effect we see in South Carolina may simply be related to this general trend. 
+As Emma's law only recently came into effect, we do not have much data available to address this question. Moreover, we have only shown an association between the enactment of the law and a reduction in drunk driving fatalities. Since we did not control for state level variables that may be relevant for the rates of drunk driving within a state (age, sex, race, socioeconomic status), it is difficult to draw a causal conclusion. It is possible that mainly demographic differences between South Carolina and Texas account for the difference in both the slope and intercept shift seen here. Indeed, rates of drunk driving throughout the U.S. in general seem to be dropping over time (see Figure 1), and the effect we see in South Carolina may simply be related to this general trend. Finally, because of obvious seasonal changes in the data, our assumption that the error terms are independant and identically distributed is likely false. This casts doubt on the standard errors in the model, and therefore the results of the significance tests.   
 
 ## Further study
-The obvious next step would be to collect demographic data relavant to drunk driving from all states in the U.S. and use that to standardize state populations for comparison (e.g., using propensity scores). Secondly, methods such as Difference and Differences could be used to account for the fact that drunk driving rates seem to generally be decreasing as a function of time. Finally, it would be interesting to examine the drunk driving penalties in all states to gather more information about the effect of laws similar to Emma's law.
+The obvious next step would be to account for the seasonal trends in the data in the linear model, in order to obtain more accurate standard errors. Secondly, it would be good to gather demographic data relavant to drunk driving from all states in the U.S. and use that to standardize state populations for a better comparison (e.g., using propensity scores). Thirdly, methods such as Difference and Differences could be used to account for the fact that drunk driving rates seem to generally be decreasing as a function of time. Finally, it would be interesting to examine the drunk driving penalties in all states to gather more information about the effect of laws similar to Emma's law.
 
 
 
 [^1]: http://scstatehouse.gov/sess120_2013-2014/bills/137.htm (Emma's law)
 [^2]: See section 521.246 (c) of the Texas Transportation code. Note that IIDs are not strictly required in all cases. http://www.statutes.legis.state.tx.us/Docs/TN/htm/TN.521.htm
 [^3]: http://www.nhtsa.gov/Data/Fatality-Analysis-Reporting-System-(FARS)
+[^4]: This assumption is probably false, making our estimates of the standard errors overly optimistic.
 
 
 # References
