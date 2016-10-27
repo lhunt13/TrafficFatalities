@@ -1,11 +1,7 @@
 READ ME:
 
-After unzipping the file TrafficFatalities.zip, navigate to 
+TrafficFatalities.Rmd generates the main write up, and contains all the R code necessary to perform the analyses and plots presented there. 
 
-“TrafficFatalities/document/trafficfatalities.Rmd”
+Supplementary.Rmd contains all R code used in the analysis, including R code for exploratory plots and downloading the data from the internet.
 
-and Knit the document.
-
-The folder “code” contains all the code needed for producing the figures and conducting the analysis in the R Markdown. The file “DownloadData.R” is not used by the R Markdown file, since we provide the data already downloaded for the user. However, if the user wishes to download data from more years we leave the code for them. 
-
-The folder “data” contains the data used for this project, as well as the data dictionary.
+The folder “data” contains the raw uncleaned data downloaded from the internet. 
