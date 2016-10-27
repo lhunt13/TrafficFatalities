@@ -9,33 +9,89 @@ output:
     fig_caption: true
 ---
 ```{r readin, echo=FALSE, warning=FALSE, message=FALSE}
-source("../code/ReadinData.R")
+library(foreign)
+library(plyr)
+library(dplyr)
+library(lubridate)
+
+######################
+## READ IN THE DATA ##
+######################
+
+path <- "../data"
+for(i in 2000:2015){
+  #person file
+  if(i <= 1982 | i >= 1994){
+    assign(paste0("person",i),read.dbf(paste0(path, "/fars",i,"/person.dbf")))
+  }
+  else{
+    assign(paste0("person",i),read.dbf(paste0(path, "/fars",i,"/per",i,".dbf")))
+  }
+}
+
+###################
+## DATA CLEANING ##
+###################
+
+## concatenate all the person files, and add a year variable
+person <- data.frame()
+for(i in 2000:2015){
+    text0 <- paste0("person",i,"$YEAR <- rep(",i,", dim(person",i,")[1])")
+    eval(parse(text=text0))
+    
+    text <- paste0("person <- rbind.fill(person, person",i,")")
+    eval(parse(text=text))
+}
+
+## get only info about drivers
+drivers <- person %>% filter(PER_TYP==1)
+
+## get ALC_RES for years prior to 2015 to agree with 2015 values
+drivers$ALC_RES[drivers$YEAR < 2015] <- 10*drivers$ALC_RES[drivers$YEAR < 2015]
+
+## get AGE for years prior to 2009, and make match years after that
+drivers$AGE[drivers$YEAR <= 2008] <- ifelse(99, 999, drivers$AGE[drivers$YEAR <= 2008])
+
+## add a variable indicating whether the driver was drunk
+## drunk driving in south carolina is defined as BAC > .08
+drivers <- dplyr::mutate(drivers, drunk=(DRINKING==1 | (ALC_RES >= 800 & ALC_RES <= 940)))
+
+## missing data
+#drunk
+drivers$drunk <- ifelse((drivers$ALC_RES>940 & drivers$DRINKING %in% c(8,9)),
+                        NA,drivers$drunk)
+#day
+drivers$DAY <- ifelse(drivers$DAY==99, 
+                      NA,drivers$DAY)
+
+##compute dates from year and month variables
+drivers$DATE <- ymd(paste(drivers$YEAR, drivers$MONTH, drivers$DAY, sep="-"))
 ```
 
 # Introduction
-In 2014, in response to concerns about having some of the highest rates of drunk driving fatalities in the United states, the South Carolina General Assembly enacted Emma's law, which requires anyone convicted of a first-time DUI offense with a blood-alcohol content (BAC) greater than 0.15 to install an ignition interlock device (IID) on their vehicles for 6 months.[^1] Previously only second time offenders were required to do so. The device requires drivers to blow into a breathalyzer before starting their car, as well as periodically throughout their drive. If the driver's BAC surpasses the legal limit, the car cannot be started. 
+On October 1st, 2014, in response to concerns about having some of the highest rates of drunk driving fatalities in the United States, the South Carolina General Assembly enacted Emma's law, which requires anyone convicted of a first-time DUI offense with a blood-alcohol content (BAC) greater than 0.15 to install an ignition interlock device (IID) on their vehicle for 6 months.[^1] The device prevents drivers from starting their vehicle unless they pass a breathalyzer test, and periodically requires them to perform a breathalyzer test while driving in order to continue normal operation of the vehicle.
 
-In this report, we examine whether there was a change in the proportion of drivers involved in a traffic fatality who were driving under the influence following the enactment of Emma's law. We use Fatality Analysis Reporting System (FARS) data provided by the National Highway Traffic Safety Administration (NHTSA).[^2] We perform an interrupted time series analysis on monthly data from South Carolina for years 2008 to 2015, with an interruption specified on October 1st, 2014, when the law came into effect. We also apply the same analysis to data from Texas, which had similar rates of drunk driving fatalities over the past 8 years and which does not mandate intallation of IIDs after a first offense.[^3]
+Assuming that other factors relevant to drunk driving fatality rates in South Carolina did not suddenly change with the passing of Emma's law, we may view this event as constituting the application of an intervention in a "quasi-experiment" from which we might be able to draw causal inferences about the effect of the policy on drunk driving fatality rates in South Carolina. (See Gribbons et al. for a discussion of quasi-experiments,) One method of analyzing quasi-experimental data is to perform an interrupted time series analysis, whereby a shift in a time series model is specified following the enactment of the policy. Assuming that data before and after the policy change come from populations that are comparable in terms of the factors relevant for the outcome, the estimate of the shift in the model can be interpreted as a causal effect. (See Wagner et al. for a discussion of interrupted time series.) 
 
-The findings will be informative for future legislators seeking to reduce the public health burden of drinking and driving. 
+In order to examine whether there was a change in the proportion of drivers involved in a traffic fatality who were driving under the influence due to the enactment of Emma's law we apply the interrupted time series method to monthly traffic fatality data from South Carolina for years 2008 to 2015, assuming a shift in the model occuring on October 1st, 2014. Further, we compare the results of this analysis to the same analysis applied to data from Texas, which had similar rates of drunk driving fatalities over the past 8 years and which does not mandate intallation of IIDs after a first offense.[^2] The findings will be informative for future legislators seeking to reduce the public health burden of drinking and driving. 
 
 # Methods
 ## Data Acquisition
-We used FARS data provided by the NHTSA, which we downloaded from ftp://ftp.nhtsa.dot.gov/fars. They provide data on every car fatality in the US from 1975 to 2015. The data we needed for the analysis can be found in the "person" file associated with each year. This file contains information regarding each person (drivers, passengers, pedestrians, bikers) involved in each fatality incident, such as their age, sex, BAC, and whether a police officer categorized them as drunk.
+We used Fatality Analysis Reporting System (FARS)[^3] data provided by the National Highway Traffic Safety Administration (NHTSA), which we downloaded from ftp://ftp.nhtsa.dot.gov/fars. They provide data on every car fatality in the US from 1975 to 2015. The data we needed for the analysis can be found in the "person" file associated with each year. This file contains information regarding each person (drivers, passengers, pedestrians, bikers) involved in each fatality incident, such as their age, sex, BAC, and whether a police officer categorized them as drunk.
 
 ## Key Variable Definitions
 ### Main Outcome
-The outcome is proportion of drivers involved in a traffic fatality who were reported to have been drunk by police, or who had BAC measured above 0.08. We chose 0.08 as the threshold because this is the legal limit in the state of South Carolina [citation]. We computed this proportion for each month from January of 2008 through Decemeber of 2015, and performed a log transformation. We chose to look at data going back to 2008 because that is when the number of drunk driviers involved in fatalities in the U.S. overall seemed to begin to decrease most recently (see Figure 1).
+The outcome is proportion of drivers involved in a traffic fatality who were reported to have been drunk by police, or who had BAC measured above 0.08. We chose 0.08 as the threshold because this is the legal limit in the state of South Carolina. We computed this proportion for each month from January of 2008 through Decemeber of 2015, and performed a log transformation. We chose to look at data going back to 2008 because that is when the number of drunk driviers involved in fatalities in the U.S. overall seemed to begin to decrease most recently (see Figure 1).
 
-```{r plotalldrunks, echo=FALSE, warning=FALSE, message=FALSE, fig.cap="Number of drunk drivers involved in a crash fatality each month in the entire U.S. from January 2000 to December 2015. Note the downward trend in time indicated by the loess smoother in red after 2008 (marked in green)." }
-## plot monthly dd counts for all USA per month
+```{r plotalldrunks, echo=FALSE, warning=FALSE, message=FALSE, fig.cap="Number of drunk drivers involved in a crash fatality each month in South Carolina from January 2000 to December 2015. Note the trend stabalizing after 2008 (marked in green) indicated by the loess smoother in red." }
+# plot monthly dd counts for South Carolina per month
 MonthlyDrunk <- drivers %>% 
-  group_by(YEAR, MONTH) %>%
-  summarise(drunks=sum(drunk, na.rm=T))
-America.drunk <- ts(MonthlyDrunk$drunks, frequency=12, start=c(2000,1))
-plot(America.drunk, main="Monthly Counts of Drunk Drivers \n in the U.S.",
+    group_by(YEAR, MONTH) %>% filter(STATE==45) %>%
+    summarise(drunks=sum(drunk, na.rm=T))
+southcarolina.drunk <- ts(MonthlyDrunk$drunks, frequency=12, start=c(2000,1))
+plot(southcarolina.drunk, main="Monthly Counts of Drunk Drivers \n in South Carolina",
      ylab="No. Drunk Drivers")
-trend <- stl(America.drunk, s.window="periodic")
+trend <- stl(southcarolina.drunk, s.window="periodic")
 lines(trend$time.series[,2], col="red")
 abline(v=2008, col="green")
 legend("topright", col=c("black","red", "green"), lty=1, legend=c("Count", "Trend","2008"))
@@ -45,10 +101,10 @@ legend("topright", col=c("black","red", "green"), lty=1, legend=c("Count", "Tren
 FARS data records the date (down to the day) of each traffic fatality, but we chose to take proprtions on a monthly basis. Therefore, we defined the date (down to the day) of each proportion for each month using an average of the days within that month on which a drunk driving fatality occured, in order to capture the most representative date of the accidents for that month. This is in contrast to arbitrarily setting the date to be the first of the month. Thus, if by chance most drunk driving accidents occured very early or late in the month this would be captured by our choice of day for that monthly proportion on the time series. 
 
 ### Intervention
-Finally, we defined a categorical variable indicating whether the date was prior to or after the onset of Emma's law (October 1st, 2014).
+Finally, we defined a categorical variable indicating whether the date was prior to or after the onset of Emma's law (October 1st, 2014). Although participants are not being randomized to pre- or post-policy intervention, because we assume that other factors relevant to drunk driving (e.g., age, race, sex, socioeconomic status) do not suddenly change in South Carolina after Emma's law came into effect, we treat the date of policy change as an intervention is a quasi-experiment. 
 
 ## Statistical Analysis
-Let $Y_m$ be the log proportion of for month $m$, $D_m$ be the date associated with that proportion, $c$ be October 1st, 2014, and $X = I(D > c)$ be an indicator variable. We performed an interrupted time series analysis with an interruption at October 1st, 2014, using the following linear model:
+Let $Y_m$ be the log proportion of for month $m$, $D_m$ be the date associated with that proportion, $c$ be October 1st, 2014, and $X = I(D > c)$ be an indicator variable. We performed an interrupted time series analysis with an interruption at October 1st, 2014, using the following linear model, which we fit using least squares:
 \[
 Y_m = \beta_0 + \beta_1 D_m + \beta_2 X + \beta_3 (X*D) + \epsilon_m
 \]
@@ -57,44 +113,93 @@ In this model, $\beta_0$ is the intercept of the time series prior to Emma's law
 # Results
 In Table 1, we report the coefficient estimates and standerd errors for both models. In Figure 2, we plot the time series of log proportion of drivers who were drunk, along with the regression lines from fitting each model.
 
-Prior to October 1st, 2014, both Texas and South Carolina seem to be trending similarly. Both states have an estimated shift it intercept that is significantly different from 0, with $p=0.014$ for Texas and $p=2.22e-06$ for South Carolina. Likewise, both have an estimated shift in slope that differs from 0, with $p=0.00799$ for Texas and $p=8.10e-08$ for South Carolina. 
+Prior to October 1st, 2014, both Texas and South Carolina seem to be trending similarly, with the monthly log-proportion of drunk drivers estimated to be increasing by $4.301$e$-05$ ($SE=3.021$e$-05, p=0.158, df=92$) and $8.132$e$-05$ ($SE=1.584$e$-05, p=1.59$e$-06, df=92$) per month for South Carolina and Texas, respectively. However, after the policy change in South Carolina we see a significant change in slope of $-2.253$e$-03$ ($SE=3.822$e$-04, p=6.13$e$-08$) compared to the smaller shift of $-5.434$e$-04$ ($SE=2.004$e$-04, p=0.00799$) seen in Texas after that time. 
 
 \begin{table}[!htbp] \centering 
-  \caption{Linear Model Results} 
+  \caption{Linear Model Results. Parentheses contain standard errors.} 
   \label{} 
-\begin{tabular}{@{\extracolsep{5pt}}rcc} 
+\begin{tabular}{@{\extracolsep{5pt}}lcc} 
 \\[-1.8ex]\hline 
 \\[-1.8ex] & South Carolina & Texas\\ 
 \hline \\[-1.8ex] 
- Intercept before 10/1/2014 & $-$0.890$^{***} (0.043)$ & $-$0.875$^{***} (0.023)$ \\ 
+ Intercept before 10/1/14 & $-$0.890$^{***}$ & $-$0.875$^{***}$ \\ 
+  & (0.043) & (0.023) \\ 
+  & & \\
+ Slope before 10/1/14 & 0.00004 & 0.0001$^{***}$ \\ 
+  & (0.00003) & (0.00002) \\ 
   & & \\ 
- Slope before 10/1/2014 & 0.00004 (0.00003) & 0.0001$^{***}$ (0.00002) \\ 
+ Intercept Shift & 5.254$^{***}$ & 1.353$^{**}$ \\ 
+  & (1.028) & (0.539) \\ 
   & & \\ 
- Intercept Shift & 5.198$^{***}$ (1.029) & 1.353$^{**}$ (0.539)\\ 
-  & & \\ 
- Slope Shift  & $-$0.002$^{***}$ (0.0004) & $-$0.001$^{***}$ (0.0002) \\ 
+ Slope shift & $-$0.002$^{***}$ & $-$0.001$^{***}$ \\ 
+  & (0.0004) & (0.0002) \\ 
   & & \\ 
 \hline \\[-1.8ex] 
 Observations & 96 & 96 \\ 
-R$^{2}$ & 0.708 & 0.257 \\ 
-Adjusted R$^{2}$ & 0.698 & 0.232 \\ 
+R$^{2}$ & 0.710 & 0.257 \\ 
+Adjusted R$^{2}$ & 0.701 & 0.232 \\ 
 Residual Std. Error (df = 92) & 0.194 & 0.101 \\ 
-F Statistic (df = 3; 92) & 74.280$^{***}$ & 10.592$^{***}$ \\ 
+F Statistic (df = 3; 92) & 75.084$^{***}$ & 10.592$^{***}$ \\ 
 \hline 
 \hline \\[-1.8ex] 
 \textit{Note:}  & \multicolumn{2}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
 \end{tabular} 
 \end{table} 
 
-
 ```{r Analysis, echo=FALSE, warning=FALSE, message=FALSE, fig.cap="We plot log-proportion of drivers involved in traffic fatalities in Texas and South Carolina who were drunk plotted against calender time from January 2008 through December 2015. Overlayed in red and blue are the interrupted time series model fits for SC and TX, respectively. Note the interruption at October 1st, 2014 when Emma's law came into effect. Prior to Emma's law SC and TX trend similarly; however, after enactment of the law we see a more drastic shift in the intercept and slope in SC compared to TX."}
-source("../code/ModelData.R")
+##############
+## MODELING ##
+##############
+## get proportion of drunk drivers per month, per year, per state for 96 months
+## let the day be the avg day for that month
+sc.drunk <- drivers %>% filter(YEAR >= 2008) %>%
+  group_by(STATE, YEAR, MONTH) %>% 
+  filter(STATE==45) %>%  
+  summarize(prop=mean(drunk, na.rm=T), DAY=round(mean(DAY))) 
+tx.drunk <- drivers %>% filter(YEAR >= 2008) %>%
+  group_by(STATE, YEAR, MONTH) %>%
+  filter(STATE==48) %>%
+  summarize(prop=mean(drunk, na.rm=T), DAY=round(mean(DAY)))
+
+## add a date variable
+sc.drunk$DATE <- ymd(paste(sc.drunk$YEAR, sc.drunk$MONTH, sc.drunk$DAY, sep="-"))
+sc.drunk$DATE_reg <- sc.drunk$DATE - ymd("2008-1-1")
+
+tx.drunk$DATE <- ymd(paste(tx.drunk$YEAR, tx.drunk$MONTH, tx.drunk$DAY, sep="-"))
+tx.drunk$DATE_reg <- tx.drunk$DATE - ymd("2008-1-1")
+
+
+## fit a linear interrupted time series using, but set intercept at Jan 1st, 2008
+c <- ymd("2014-10-1") - ymd("2008-1-1")
+model.sc <- lm(log(prop) ~ DATE_reg + (DATE_reg >= c) + DATE_reg*(DATE_reg >= c), 
+               data=sc.drunk)
+model.tx <- lm(log(prop) ~ DATE_reg + (DATE_reg >= c) + DATE_reg*(DATE_reg >= c), 
+               data=tx.drunk)
+
+## plot the data with the fitted line
+# southcaroline
+par(mfrow=c(1,1))
+plot(sc.drunk$DATE, log(sc.drunk$prop), type="l",
+     ylab="Log(Proportion)",
+     xlab="Time",
+     main="South Carolina vs. Texas",
+     ylim=c(-2.3,-0.5),
+     lwd=2)
+lines(sc.drunk$DATE, model.sc$fitted.values, col="red", lwd=2)
+
+# texas
+points(tx.drunk$DATE, log(tx.drunk$prop), type="l",
+       col="darkorange",lwd=2)
+lines(tx.drunk$DATE, model.tx$fitted.values, col="blue",lwd=2)
+legend("bottomleft", col=c("black","red","darkorange","blue"), lty=1, lwd=3, 
+       legend=c("SC","SC fitted","TX","TX fitted"))
+
 ```
 
 # Discussion
 Both the intercept shift and slope shift are larger for South Carolina compared to Texas, despite both states having a similar trend prior to the intervention. We interpret this to be consistent with the claim that there was a greater decrease in the proportion of drivers involved in fatalities who were drunk in South Carolina after the enactment of Emma's law compared to Texas.
 
-Texas does have IID requirements for DUI offenders, however the law does not require offenders to install them in every case. Thus, the foregoing results suggest that the harsher penalties for first time offenders in South Carolina are associated with a drop in the proportion of drivers invovled in traffic fatalities who were drunk. This is informative for legislators interested in reducing the public health burden of drunk driving.
+Texas does have IID requirements for DUI offenders, however the law does not require offenders to install them in every case. Thus, the foregoing results suggest that the harsher penalties enacted for first time offenders in South Carolina with Emma's law are associated with a drop in the proportion of drivers involved in traffic fatalities who were drunk. Assuming that other factors relevant to drunk driving rates do not significantly change in South Carolina or Texas after the date of the policy change in South Carolina, we may interpret these results to indicate that the policy causes the slope change seen in South Carolina. This is informative for legislators interested in reducing the public health burden of drunk driving.
 
 ## Limitations
 As Emma's law only recently came into effect, we do not have much data available to address this question. Moreover, we have only shown an association between the enactment of the law and a reduction in drunk driving fatalities. Since we did not control for state level variables that may be relevant for the rates of drunk driving within a state (age, sex, race, socioeconomic status), it is difficult to draw a causal conclusion. It is possible that mainly demographic differences between South Carolina and Texas account for the difference in both the slope and intercept shift seen here. Indeed, rates of drunk driving throughout the U.S. in general seem to be dropping over time (see Figure 1), and the effect we see in South Carolina may simply be related to this general trend. 
@@ -104,10 +209,11 @@ The obvious next step would be to collect demographic data relavant to drunk dri
 
 
 
-
-
-
-
 [^1]: http://scstatehouse.gov/sess120_2013-2014/bills/137.htm (Emma's law)
-[^2]: http://www.nhtsa.gov/Data/Fatality-Analysis-Reporting-System-(FARS)
-[^3]: See section 521.246 (c) of the Texas Transportation code. Note that IIDs are not strictly required in all cases. http://www.statutes.legis.state.tx.us/Docs/TN/htm/TN.521.htm
+[^2]: See section 521.246 (c) of the Texas Transportation code. Note that IIDs are not strictly required in all cases. http://www.statutes.legis.state.tx.us/Docs/TN/htm/TN.521.htm
+[^3]: http://www.nhtsa.gov/Data/Fatality-Analysis-Reporting-System-(FARS)
+
+
+# References
+1. Wagner et al.
+2. Gribbons et al.

@@ -49,12 +49,6 @@ drivers <- dplyr::mutate(drivers, drunk=(DRINKING==1 | (ALC_RES >= 800 & ALC_RES
 #drunk
 drivers$drunk <- ifelse((drivers$ALC_RES>940 & drivers$DRINKING %in% c(8,9)),
                         NA,drivers$drunk)
-#age
-drivers$AGE <- ifelse(drivers$AGE %in% c(998,999), 
-                      NA,drivers$AGE)
-#sex
-drivers$SEX <- ifelse(drivers$SEX %in% c(8,9),
-                      NA,drivers$SEX)
 #day
 drivers$DAY <- ifelse(drivers$DAY==99, 
                       NA,drivers$DAY)
