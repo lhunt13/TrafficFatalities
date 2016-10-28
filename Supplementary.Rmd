@@ -35,6 +35,11 @@ DownloadTime <- Sys.time()
 
 # Reading in the data
 ```{r ReadinData}
+#install these packages if necessary
+#install.packages("foreign")
+#install.packages("plyr")
+#install.packages("dplyr")
+#install.packages("lubridate")
 library(foreign)
 library(plyr)
 library(dplyr)

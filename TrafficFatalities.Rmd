@@ -9,11 +9,15 @@ output:
     fig_caption: true
 ---
 ```{r readin, echo=FALSE, warning=FALSE, message=FALSE}
+#install these packages if necessary
+#install.packages("foreign")
+#install.packages("plyr")
+#install.packages("dplyr")
+#install.packages("lubridate")
 library(foreign)
 library(plyr)
 library(dplyr)
 library(lubridate)
-library(robustbase)
 
 ######################
 ## READ IN THE DATA ##
