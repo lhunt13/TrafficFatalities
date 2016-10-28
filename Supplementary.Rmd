@@ -9,6 +9,7 @@ The following R code was used to compute everything needed for the analysis, inc
 # Downloading the FARS data
 We last downlaoded the data on 10/26/16:
 ```{r DownloadData}
+dir.create("./data")
 path <- "./data"
 for(i in 2000:2015){
   dir.create(paste(path,"/fars",i,sep=""))

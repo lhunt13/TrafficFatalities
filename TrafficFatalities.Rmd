@@ -219,5 +219,14 @@ The obvious next step would be to account for the seasonal trends in the data in
 
 
 # References
-1. Wagner et al.
-2. Gribbons et al.
+1. Wagner AK, Soumerai SB, Zhang F, Ross-Degnan D (2002). Segmented regression analysis of interrupted time series studies in medication use research. Journal of Clinical Pharmacy and Therapuetics. 27, 299-309.
+
+2. Gribbons B, Herman J (1997). True and quasi-experimental designs. Practical Assessment, Research & Evaluation. 5(14). Available online: http://PAREonline.net/getvn.asp?v=5&n=14.
+
+
+
+
+
+
+
+

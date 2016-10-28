@@ -1,7 +1,5 @@
 READ ME:
 
-TrafficFatalities.Rmd generates the main write up, and contains all the R code necessary to perform the analyses and plots presented there. 
+Place the folder “data” in your working directory and run the R markdown file “TrafficFatalities.Rmd”.
 
-Supplementary.Rmd contains all R code used in the analysis, including R code for exploratory plots and downloading the data from the internet.
-
-The folder “data” contains the raw uncleaned data downloaded from the internet. 
+If you cannot place the “data” folder in your working directory, then run the R markdown file “Supplementary.Rmd” first. This should download the data necessary to your working directory, so then you can run “TrafficFatalities.Rmd”.
