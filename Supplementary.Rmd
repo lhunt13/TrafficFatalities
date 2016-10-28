@@ -4,7 +4,7 @@ author: "Lamar Hunt III"
 date: "10/26/2016"
 output: pdf_document
 ---
-The following R code was used to compute everything needed for the analysis, including exploratory plots not presented in the paper that we used to make decisions about the analysis. We performed this download on 
+The following R code was used to compute everything needed for the analysis, including exploratory plots not presented in the paper that we used to make decisions about the analysis. 
 
 # Downloading the FARS data
 We last downlaoded the data on 10/26/16:
